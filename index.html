@@ -907,7 +907,13 @@ function updateDots(idx) {
     `<div class="dot ${i === idx ? 'active' : i < idx ? 'done' : ''}"></div>`
   ).join('');
 }
-
+function sendData() {
+  fetch(https://script.google.com/macros/s/AKfycbwiWNx9Qfl0Ziss55zv7b2wVz9ktRqzz9V5nZm-A7EJSy0O0UcFOAy5s87O1PCfzr2SRA/exec, {
+    method: "POST",
+    body: JSON.stringify(answers),
+  });
+}
+  sendData();
 // ── RESULTS ───────────────────────────────────────────────────────────────────
 function showResults() {
   document.getElementById('progressFill').style.width = '100%';
