@@ -601,7 +601,7 @@
       </div>
     </div>
     <div class="nav-btns">
-      <button class="btn-next" style="width:100%" onclick="goTo(0)">
+      <button class="btn-next" style="width:100%" onclick="startSurvey()">
         Empezar encuesta →
       </button>
     </div>
@@ -842,13 +842,143 @@ function saveText(qIdx, val) {
   updateNextBtn(qIdx);
 }
 
+
 function updateNextBtn(qIdx) {
   const btn = document.getElementById(`btn-${qIdx}`);
   const q = questions[qIdx];
   const ans = answers[q.id];
-  // text fields are optional
   const hasAnswer = q.type === 'text' ? true : (Array.isArray(ans) ? ans.length > 0 : !!ans);
-  btn.disabled = !hasAnswer;
+  if (btn) btn.disabled = !hasAnswer;
+}
+
+// ── DATA / TRACKING ──────────────────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwiWNx9Qfl0Ziss55zv7b2wVz9ktRqzz9V5nZm-A7EJSy0O0UcFOAy5s87O1PCfzr2SRA/exec';
+const SESSION_KEY = 'familia_session_id';
+const SURVEY_SENT_KEY = 'familia_survey_sent';
+
+let pageViewTracked = false;
+let surveySubmitted = false;
+let pendingRequestCount = 0;
+
+function getSessionId() {
+  try {
+    let sessionId = sessionStorage.getItem(SESSION_KEY);
+    if (!sessionId) {
+      sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+      sessionStorage.setItem(SESSION_KEY, sessionId);
+    }
+    return sessionId;
+  } catch (e) {
+    return `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+}
+
+function getPageMeta() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    pageUrl: window.location.href,
+    pagePath: window.location.pathname,
+    referrer: document.referrer || '',
+    userAgent: navigator.userAgent || '',
+    language: navigator.language || '',
+    screenWidth: window.screen ? window.screen.width : '',
+    screenHeight: window.screen ? window.screen.height : '',
+    utm_source: params.get('utm_source') || '',
+    utm_medium: params.get('utm_medium') || '',
+    utm_campaign: params.get('utm_campaign') || '',
+    utm_content: params.get('utm_content') || '',
+    utm_term: params.get('utm_term') || ''
+  };
+}
+
+async function postToScript(payload) {
+  pendingRequestCount += 1;
+  try {
+    const response = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: {
+        'Content-Type': 'text/plain;charset=utf-8'
+      },
+      body: JSON.stringify({
+        ...payload,
+        sessionId: getSessionId(),
+        timestampIso: new Date().toISOString(),
+        ...getPageMeta()
+      })
+    });
+
+    const text = await response.text();
+    console.log('Apps Script response:', text);
+    return true;
+  } catch (error) {
+    console.error('Error enviando a Apps Script:', error);
+    return false;
+  } finally {
+    pendingRequestCount = Math.max(0, pendingRequestCount - 1);
+  }
+}
+
+function fireAndForget(payload) {
+  postToScript(payload);
+}
+
+function trackPageViewOnce() {
+  if (pageViewTracked) return;
+  pageViewTracked = true;
+  fireAndForget({ type: 'event', event: 'page_view', detail: 'landing' });
+}
+
+function trackQuestionView(idx) {
+  const q = questions[idx];
+  if (!q) return;
+  fireAndForget({ type: 'event', event: 'view_question', detail: q.id, questionNumber: idx + 1 });
+}
+
+function trackAnswer(qIdx) {
+  const q = questions[qIdx];
+  if (!q) return;
+  let value = answers[q.id];
+  if (Array.isArray(value)) value = value.join(' | ');
+  fireAndForget({
+    type: 'event',
+    event: 'answered_question',
+    detail: q.id,
+    questionNumber: qIdx + 1,
+    answerPreview: value || ''
+  });
+}
+
+async function sendSurveyAnswers() {
+  if (surveySubmitted) return true;
+
+  const payload = {
+    type: 'survey',
+    parentAge: answers.parentAge || '',
+    livingAlone: answers.livingAlone || '',
+    mainWorries: Array.isArray(answers.mainWorries) ? answers.mainWorries.join(' | ') : '',
+    scamExp: answers.scamExp || '',
+    techLevel: answers.techLevel || '',
+    checkFreq: answers.checkFreq || '',
+    wouldPay: answers.wouldPay || '',
+    openComment: answers.openComment || ''
+  };
+
+  const ok = await postToScript(payload);
+  if (ok) {
+    surveySubmitted = true;
+    try {
+      sessionStorage.setItem(SURVEY_SENT_KEY, '1');
+    } catch (e) {}
+  }
+  return ok;
+}
+
+async function sendEmailLead(email) {
+  return await postToScript({
+    type: 'email',
+    email: email
+  });
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────────────────────
@@ -867,6 +997,12 @@ function goTo(idx) {
   updateProgress(idx);
   updateDots(idx);
   showScreen(`screen-q${idx}`);
+  trackQuestionView(idx);
+}
+
+async function startSurvey() {
+  fireAndForget({ type: 'event', event: 'start_survey', detail: 'intro_cta' });
+  goTo(0);
 }
 
 function goBack(idx) {
@@ -886,11 +1022,15 @@ function goToBack(idx) {
   showScreen(`screen-q${idx}`, true);
 }
 
-function goNext(idx) {
+async function goNext(idx) {
+  trackAnswer(idx);
+
   if (idx < TOTAL - 1) {
     goTo(idx + 1);
   } else {
-    showResults();
+    const ok = await sendSurveyAnswers();
+    fireAndForget({ type: 'event', event: ok ? 'completed_survey' : 'completed_survey_pending', detail: ok ? 'saved' : 'save_error' });
+    showResults(ok);
   }
 }
 
@@ -907,60 +1047,66 @@ function updateDots(idx) {
     `<div class="dot ${i === idx ? 'active' : i < idx ? 'done' : ''}"></div>`
   ).join('');
 }
-function sendData() {
-  fetch(https://script.google.com/macros/s/AKfycbwiWNx9Qfl0Ziss55zv7b2wVz9ktRqzz9V5nZm-A7EJSy0O0UcFOAy5s87O1PCfzr2SRA/exec, {
-    method: "POST",
-    body: JSON.stringify(answers),
-  });
-}
-  sendData();
+
 // ── RESULTS ───────────────────────────────────────────────────────────────────
-function showResults() {
+function showResults(saved = true) {
   document.getElementById('progressFill').style.width = '100%';
-  buildResults();
+  buildResults(saved);
   showScreen('screen-results');
 }
 
-function buildResults() {
+function buildResults(saved = true) {
   const container = document.getElementById('results-cards');
   const summaries = [
     { q: 'Familiar mayor', key: 'parentAge' },
     { q: 'Convivencia', key: 'livingAlone' },
     { q: 'Principales preocupaciones', key: 'mainWorries' },
     { q: 'Experiencia con estafas', key: 'scamExp' },
-    { q: 'Manejo del smartphone', key: 'techLevel', suffix: '/ 5' },
+    { q: 'Manejo del smartphone', key: 'techLevel', suffix: ' / 5' },
     { q: 'Frecuencia de contacto', key: 'checkFreq' },
     { q: 'Disposición a pagar', key: 'wouldPay' },
   ];
 
-  container.innerHTML = summaries.map(s => {
+  const cards = summaries.map(s => {
     let ans = answers[s.key];
     if (!ans) return '';
     if (Array.isArray(ans)) ans = ans.join(', ');
     const isHighlight = s.key === 'wouldPay' || s.key === 'scamExp';
     return `<div class="result-card">
       <div class="result-q">${s.q}</div>
-      <div class="result-a ${isHighlight ? 'highlight' : ''}">${ans}${s.suffix||''}</div>
+      <div class="result-a ${isHighlight ? 'highlight' : ''}">${ans}${s.suffix || ''}</div>
     </div>`;
   }).join('');
 
-  const comment = answers['openComment'];
+  let html = cards;
+
+  const comment = answers.openComment;
   if (comment) {
-    container.innerHTML += `<div class="result-card">
+    html += `<div class="result-card">
       <div class="result-q">Tu comentario</div>
       <div class="result-a" style="font-style:italic;color:var(--mid)">"${comment}"</div>
     </div>`;
   }
+
+  if (!saved) {
+    html = `<div class="result-card" style="border-color:var(--gold);background:var(--gold-l)">
+      <div class="result-q" style="color:var(--mid)">Aviso</div>
+      <div class="result-a" style="font-size:15px;color:var(--mid)">Vimos tus respuestas, pero no logramos guardarlas en la base en este intento. Revisa tu Apps Script y vuelve a probar.</div>
+    </div>` + html;
+  }
+
+  container.innerHTML = html;
 }
 
 function shareWhatsApp() {
-  const url = encodeURIComponent(window.location.href);
   const msg = encodeURIComponent('Hola 👋 Estoy respondiendo una encuesta sobre una app para ayudar a nuestros papás/abuelos con su día a día y protegerlos de estafas. ¡Tarda solo 5 minutos! 👇\n\n' + window.location.href);
+  fireAndForget({ type: 'event', event: 'share_whatsapp', detail: 'results_screen' });
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
 function copyLink() {
   const btn = document.getElementById('copyBtn');
+  fireAndForget({ type: 'event', event: 'copy_link', detail: 'results_screen' });
   navigator.clipboard.writeText(window.location.href).then(() => {
     btn.classList.add('copied');
     btn.innerHTML = '✓ ¡Enlace copiado!';
@@ -969,7 +1115,6 @@ function copyLink() {
       btn.innerHTML = '🔗 Copiar enlace de la encuesta';
     }, 2500);
   }).catch(() => {
-    // fallback
     const ta = document.createElement('textarea');
     ta.value = window.location.href;
     document.body.appendChild(ta);
@@ -985,34 +1130,46 @@ function copyLink() {
   });
 }
 
-function saveEmail() {
-  const email = document.getElementById('emailInput').value.trim();
+async function saveEmail() {
+  const input = document.getElementById('emailInput');
+  const email = input.value.trim();
   if (!email || !email.includes('@')) return;
-  document.getElementById('emailConfirm').style.display = 'block';
-  document.getElementById('emailInput').value = '';
-  // In production: send to backend
-  console.log('Email captured:', email);
+
+  const ok = await sendEmailLead(email);
+  if (ok) {
+    document.getElementById('emailConfirm').style.display = 'block';
+    input.value = '';
+    fireAndForget({ type: 'event', event: 'lead_email_saved', detail: 'results_screen' });
+  } else {
+    alert('No se pudo guardar el correo. Revisa la conexión con Apps Script.');
+  }
 }
 
 function restart() {
   Object.keys(answers).forEach(k => delete answers[k]);
   current = -1;
+  surveySubmitted = false;
+  try {
+    sessionStorage.removeItem(SURVEY_SENT_KEY);
+  } catch (e) {}
   document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('emailConfirm').style.display = 'none';
+  document.getElementById('emailInput').value = '';
   showScreen('screen-intro');
-  // Reset all option states
   document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
   document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
   document.querySelectorAll('textarea').forEach(t => t.value = '');
   document.querySelectorAll('.btn-next').forEach(b => {
     if (b.id && b.id.startsWith('btn-')) {
-      const idx = parseInt(b.id.replace('btn-',''));
+      const idx = parseInt(b.id.replace('btn-', ''), 10);
       if (questions[idx].type !== 'text') b.disabled = true;
     }
   });
+  fireAndForget({ type: 'event', event: 'restart_survey', detail: 'results_screen' });
 }
-
 // ── INIT ──────────────────────────────────────────────────────────────────────
 buildScreens();
+trackPageViewOnce();
 // Mark text questions as not requiring answer for next button
 questions.forEach((q, idx) => {
   if (q.type === 'text') {
