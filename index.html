@@ -1057,15 +1057,19 @@ function buildResults() {
   }
 }
 
+const SURVEY_URL = 'https://bit.ly/Famiapp';
+
 function shareWhatsApp() {
-  const url = encodeURIComponent(window.location.href);
-  const msg = encodeURIComponent('Hola 👋 Estoy respondiendo una encuesta sobre una app para ayudar a nuestros papás/abuelos con su día a día y protegerlos de estafas. ¡Tarda solo 5 minutos! 👇\n\n' + window.location.href);
+  const url = encodeURIComponent(SURVEY_URL);
+  const msg = encodeURIComponent('Hola 👋 Estoy respondiendo una encuesta sobre una app para ayudar a nuestros papás/abuelos con su día a día y protegerlos de estafas. ¡Tarda solo 5 minutos! 👇
+
+' + SURVEY_URL);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
 function copyLink() {
   const btn = document.getElementById('copyBtn');
-  navigator.clipboard.writeText(window.location.href).then(() => {
+  navigator.clipboard.writeText(SURVEY_URL).then(() => {
     btn.classList.add('copied');
     btn.innerHTML = '✓ ¡Enlace copiado!';
     setTimeout(() => {
@@ -1075,7 +1079,7 @@ function copyLink() {
   }).catch(() => {
     // fallback
     const ta = document.createElement('textarea');
-    ta.value = window.location.href;
+    ta.value = SURVEY_URL;
     document.body.appendChild(ta);
     ta.select();
     document.execCommand('copy');
