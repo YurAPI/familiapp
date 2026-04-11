@@ -1061,9 +1061,7 @@ const SURVEY_URL = 'https://bit.ly/Famiapp';
 
 function shareWhatsApp() {
   const url = encodeURIComponent(SURVEY_URL);
-  const msg = encodeURIComponent('Hola 👋 Estoy respondiendo una encuesta sobre una app para ayudar a nuestros papás/abuelos con su día a día y protegerlos de estafas. ¡Tarda solo 5 minutos! 👇
-
-' + SURVEY_URL);
+  const msg = encodeURIComponent('Hola 👋 Estoy respondiendo una encuesta sobre una app para ayudar a nuestros papás/abuelos con su día a día y protegerlos de estafas. ¡Tarda solo 5 minutos! 👇\n\n' + SURVEY_URL);
   window.open(`https://wa.me/?text=${msg}`, '_blank');
 }
 
