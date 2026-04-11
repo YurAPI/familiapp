@@ -862,12 +862,12 @@ function showScreen(id, back = false) {
   window.scrollTo(0, 0);
 }
 
-async function goTo(idx) {
+function goTo(idx) {
   current = idx;
   updateProgress(idx);
   updateDots(idx);
   showScreen(`screen-q${idx}`);
-  await sendEvent("view_question", `q${idx + 1}`, { questionNumber: idx + 1 });
+  sendEvent("view_question", `q${idx + 1}`, { questionNumber: idx + 1 }); // fire & forget
 }
 
 function goBack(idx) {
@@ -896,20 +896,27 @@ async function goNext(idx) {
     answerPreview = answerPreview.slice(0, 120);
   }
 
-  await sendEvent("answered_question", q.id, {
+  // Fire tracking in background — don't block navigation
+  sendEvent("answered_question", q.id, {
     questionNumber: idx + 1,
     answerPreview: answerPreview || ""
   });
 
   if (idx < TOTAL - 1) {
-    await goTo(idx + 1);
+    goTo(idx + 1); // instant navigation
   } else {
+    // Last question: show loading, then submit
+    const btn = document.getElementById(`btn-${idx}`);
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:0.7">Guardando...</span>';
     const surveyOk = await sendSurveyAnswers();
     if (!surveyOk) {
+      btn.disabled = false;
+      btn.innerHTML = 'Ver mis respuestas ✓';
       alert("No se pudo guardar la encuesta. Revisa la conexión e inténtalo nuevamente.");
       return;
     }
-    await sendEvent("completed_survey");
+    sendEvent("completed_survey"); // fire & forget
     showResults();
   }
 }
@@ -1014,9 +1021,9 @@ async function sendEmailLead(email) {
 }
 
 // ── RESULTS ───────────────────────────────────────────────────────────────────
-async function startSurvey() {
-  await sendEvent("start_survey");
-  await goTo(0);
+function startSurvey() {
+  sendEvent("start_survey"); // fire & forget
+  goTo(0); // instant
 }
 
 function showResults() {
