@@ -587,10 +587,35 @@ function go(i){cur=i;updateProg(i);updateDots(i);show(`s-${i}`);}
 function goBack(i){i>0?go(i-1):(cur=-1,updateProg(-1),show('s-intro'));}
 function goNext(i){i<N-1?go(i+1):showResults();}
 
+// ── GOOGLE SHEETS CONNECTOR ──────────────────────
+// Reemplaza esta URL con la de tu Apps Script deployment
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzQV0nxZkUX9JY4pIleKjCVOGjCOmLHEJmYv8MYBClD_Uf0D236vFT71h43i2KwwbQCFg/exec';
+
+function sendToSheets(payload) {
+  if (!SHEETS_URL || SHEETS_URL.includes('TU_APPS')) return;
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, userAgent: navigator.userAgent })
+  }).catch(() => {}); // silently fail — no interrumpir UX
+}
+
 function showResults(){
   updateProg(N);
   buildResults();
   show('s-results');
+  // Enviar respuestas a Google Sheets
+  sendToSheets({
+    soledad:       ans['lonely']        || '',
+    features:      ans['features']      || '',
+    top3:          ans['top3']          || '',
+    alone_concern: ans['alone_concern'] || '',
+    familycoord:   ans['familycoord']   || '',
+    techbarrier:   ans['techbarrier']   || '',
+    price:         ans['price']         || '',
+    comment:       ans['comment']       || '',
+  });
 }
 
 function buildResults(){
@@ -628,7 +653,8 @@ function saveEmail(){
   if(!v||!v.includes('@')) return;
   document.getElementById('emailOk').style.display='block';
   document.getElementById('emailIn').value='';
-  console.log('email:',v);
+  // Enviar email a Sheets como columna adicional
+  sendToSheets({ email: v, type: 'email_capture' });
 }
 function restart(){
   Object.keys(ans).forEach(k=>delete ans[k]);
