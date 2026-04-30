@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FamilIA · ¿Qué necesita tu familiar?</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --terra:   #C4622D;
+  --terra-d: #9B4820;
+  --terra-l: #F9EDE7;
+  --sage:    #6B9B6F;
+  --sage-l:  #EDF5EE;
+  --navy:    #1E3448;
+  --navy-m:  #2C4A64;
+  --gold:    #C8963A;
+  --gold-l:  #FDF4E3;
+  --cream:   #FAF8F4;
+  --sand:    #EDE6DA;
+  --white:   #FFFFFF;
+  --ink:     #1A1714;
+  --mid:     #52463C;
+  --muted:   #998F85;
+  --r:       18px;
+  --rs:      10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;overflow-x:hidden}
+
+/* ── PROGRESS ── */
+.prog-wrap{position:fixed;top:0;left:0;right:0;z-index:200;height:3px;background:var(--sand)}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--terra),var(--gold));transition:width .5s ease;border-radius:0 2px 2px 0}
+
+/* ── WRAPPER ── */
+.wrap{max-width:480px;margin:0 auto;padding-bottom:96px;min-height:100vh}
+
+/* ── SCREENS ── */
+.screen{display:none}
+.screen.on{display:block;animation:fadeUp .35s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HERO ── */
+.hero{background:var(--navy);padding:52px 24px 40px;position:relative;overflow:hidden}
+.hero-orb{position:absolute;border-radius:50%;background:rgba(196,98,45,.15)}
+.hero-orb.a{width:280px;height:280px;top:-80px;right:-80px}
+.hero-orb.b{width:180px;height:180px;bottom:-60px;left:-40px;background:rgba(107,155,111,.12)}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 14px;font-size:11.5px;font-weight:500;color:rgba(255,255,255,.75);letter-spacing:.5px;margin-bottom:18px;position:relative;z-index:1}
+.hero h1{font-family:'Lora',serif;font-size:36px;font-weight:400;color:#fff;line-height:1.18;margin-bottom:10px;position:relative;z-index:1}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.6);line-height:1.6;margin-bottom:26px;max-width:340px;position:relative;z-index:1}
+.chips{display:flex;gap:8px;flex-wrap:wrap;position:relative;z-index:1}
+.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.08);border-radius:20px;padding:5px 12px;font-size:12px;color:rgba(255,255,255,.65)}
+
+/* ── CONTENT ── */
+.content{padding:28px 20px 0}
+
+/* ── Q META ── */
+.q-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.q-num{width:30px;height:30px;border-radius:50%;background:var(--terra);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#fff;flex-shrink:0}
+.q-step{font-size:12px;color:var(--muted)}
+.q-text{font-family:'Lora',serif;font-size:21px;font-weight:400;color:var(--ink);line-height:1.38;margin-bottom:6px}
+.q-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5}
+
+/* ── SINGLE OPTIONS ── */
+.options{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:13px;background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:all .18s;user-select:none}
+.opt:active{transform:scale(.98)}
+.opt.sel{border-color:var(--terra);background:var(--terra-l)}
+.opt-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+.opt-label{font-size:14.5px;color:var(--ink);flex:1;line-height:1.35}
+.opt-dot{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--sand);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .18s}
+.opt.sel .opt-dot{background:var(--terra);border-color:var(--terra);color:#fff}
+/* multi */
+.opt.multi.sel{border-color:var(--sage);background:var(--sage-l)}
+.opt.multi.sel .opt-dot{background:var(--sage);border-color:var(--sage);color:#fff;border-radius:4px}
+
+/* ── RANK ── */
+.rank-list{display:flex;flex-direction:column;gap:8px}
+.rank-item{display:flex;align-items:center;gap:12px;background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:12px 14px;cursor:grab;user-select:none;transition:all .18s}
+.rank-item.dragging{opacity:.5;border-style:dashed}
+.rank-item.drag-over{border-color:var(--terra);background:var(--terra-l)}
+.rank-handle{display:flex;flex-direction:column;gap:3px;padding:2px}
+.rank-handle span{display:block;width:18px;height:2px;background:var(--muted);border-radius:1px}
+.rank-pos{width:26px;height:26px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.rank-label{font-size:14px;color:var(--ink);flex:1}
+.rank-emoji{font-size:18px}
+
+/* ── SCALE ── */
+.scale-wrap{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:18px 16px}
+.scale-btns{display:flex;gap:6px;margin-bottom:10px}
+.s-btn{flex:1;aspect-ratio:1;border-radius:var(--rs);border:1.5px solid var(--sand);background:var(--cream);font-size:15px;font-weight:500;color:var(--mid);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s}
+.s-btn:active{transform:scale(.93)}
+.s-btn.sel{background:var(--navy);border-color:var(--navy);color:#fff;transform:scale(1.07);box-shadow:0 4px 14px rgba(30,52,72,.22)}
+.scale-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+
+/* ── PRICE CARDS ── */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.price-card{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:16px 14px;cursor:pointer;transition:all .18s;text-align:center}
+.price-card:active{transform:scale(.97)}
+.price-card.sel{border-color:var(--terra);background:var(--terra-l)}
+.price-card.sel.green{border-color:var(--sage);background:var(--sage-l)}
+.price-amount{font-family:'Lora',serif;font-size:22px;font-weight:500;color:var(--terra);margin-bottom:3px}
+.price-period{font-size:11px;color:var(--muted)}
+.price-desc{font-size:12px;color:var(--mid);margin-top:6px;line-height:1.4}
+.price-check{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--sand);margin:10px auto 0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .18s}
+.price-card.sel .price-check{background:var(--terra);border-color:var(--terra);color:#fff}
+.price-card.sel.green .price-check{background:var(--sage);border-color:var(--sage);color:#fff}
+
+/* ── TEXTAREA ── */
+.textarea-wrap{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:14px;transition:border-color .2s}
+.textarea-wrap:focus-within{border-color:var(--terra)}
+textarea{width:100%;border:none;outline:none;background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:14.5px;color:var(--ink);resize:none;min-height:90px;line-height:1.6}
+textarea::placeholder{color:var(--muted)}
+
+/* ── HIGHLIGHT BOX ── */
+.insight-box{background:var(--gold-l);border:1.5px solid rgba(200,150,58,.25);border-radius:var(--rs);padding:12px 14px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start}
+.insight-box p{font-size:13px;color:var(--mid);line-height:1.5}
+
+/* ── NAV ── */
+.nav-fixed{position:fixed;bottom:0;left:0;right:0;padding:10px 20px 18px;background:linear-gradient(to top,var(--cream) 65%,transparent);display:flex;gap:10px;max-width:480px;margin:0 auto}
+.btn-back{width:46px;height:50px;border-radius:var(--rs);border:1.5px solid var(--sand);background:var(--white);color:var(--mid);font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .18s}
+.btn-next{flex:1;height:50px;border-radius:var(--rs);border:none;background:var(--terra);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .18s;box-shadow:0 4px 18px rgba(196,98,45,.28)}
+.btn-next:active{transform:scale(.97)}
+.btn-next:disabled{background:var(--sand);color:var(--muted);box-shadow:none;cursor:default}
+
+/* ── INTRO ── */
+.intro-body{padding:28px 20px 100px}
+.intro-cards{display:flex;flex-direction:column;gap:11px;margin-bottom:24px}
+.intro-card{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:15px;display:flex;gap:13px;align-items:flex-start}
+.ic-icon{font-size:26px;flex-shrink:0;margin-top:2px}
+.ic-title{font-size:14.5px;font-weight:600;color:var(--ink);margin-bottom:3px}
+.ic-desc{font-size:12.5px;color:var(--muted);line-height:1.5}
+.privacy{background:var(--sage-l);border-radius:var(--rs);padding:11px 13px;display:flex;gap:9px;align-items:center;font-size:12.5px;color:var(--sage);font-weight:500}
+
+/* ── DOTS ── */
+.dots{display:flex;justify-content:center;gap:5px;padding:16px 0 6px}
+.dot{width:6px;height:6px;border-radius:3px;background:var(--sand);transition:all .3s}
+.dot.on{background:var(--terra);width:18px}
+.dot.done{background:var(--sage)}
+
+/* ── RESULTS ── */
+.results-hero{background:var(--terra);padding:48px 24px 36px;text-align:center;position:relative;overflow:hidden}
+.results-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.07)}
+.result-emoji{font-size:52px;display:block;margin-bottom:12px;animation:pop .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+.results-hero h2{font-family:'Lora',serif;font-size:27px;font-weight:400;color:#fff;margin-bottom:8px}
+.results-hero p{font-size:14px;color:rgba(255,255,255,.75);line-height:1.5}
+.results-body{padding:26px 20px 100px}
+.r-section{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:12px}
+.r-card{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:16px;margin-bottom:11px}
+.r-q{font-size:12px;color:var(--muted);margin-bottom:5px}
+.r-a{font-size:15px;font-weight:500;color:var(--ink);line-height:1.4}
+.r-a.hi{font-family:'Lora',serif;font-size:19px;font-weight:400;color:var(--terra)}
+
+.share-btn{width:100%;padding:15px;border-radius:var(--r);border:none;background:#25D366;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:10px;box-shadow:0 5px 18px rgba(37,211,102,.28);transition:all .2s}
+.share-btn:active{transform:scale(.97)}
+.copy-btn{width:100%;padding:13px;border-radius:var(--r);border:1.5px solid var(--sand);background:var(--white);color:var(--mid);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:18px;transition:all .2s}
+.copy-btn.copied{border-color:var(--sage);color:var(--sage);background:var(--sage-l)}
+.email-row{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:14px;display:flex;gap:10px;align-items:center;margin-bottom:8px}
+.email-row input{flex:1;border:none;outline:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;color:var(--ink);background:transparent}
+.email-row input::placeholder{color:var(--muted)}
+.email-ok{background:var(--terra);color:#fff;border:none;border-radius:var(--rs);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
+.email-confirm{display:none;text-align:center;font-size:13px;color:var(--sage);font-weight:500;padding:6px}
+.restart{display:block;text-align:center;font-size:12.5px;color:var(--muted);cursor:pointer;padding:8px;text-decoration:underline;text-underline-offset:3px;margin-top:4px}
+
+/* ── FEATURE PRIORITY ── */
+.feat-grid{display:flex;flex-direction:column;gap:9px}
+.feat-opt{background:var(--white);border:1.5px solid var(--sand);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:12px}
+.feat-opt.sel{border-color:var(--terra);background:var(--terra-l)}
+.feat-opt.multi.sel{border-color:var(--sage);background:var(--sage-l)}
+.feat-badge{background:var(--sand);border-radius:6px;padding:2px 8px;font-size:10px;font-weight:600;color:var(--mid);white-space:nowrap}
+.feat-opt.sel .feat-badge{background:rgba(196,98,45,.15);color:var(--terra)}
+.feat-opt.multi.sel .feat-badge{background:rgba(107,155,111,.2);color:var(--sage)}
+</style>
+</head>
+<body>
+
+<div class="prog-wrap"><div class="prog-bar" id="prog" style="width:0%"></div></div>
+
+<div class="wrap">
+
+<!-- ══ INTRO ══════════════════════════════════════════════════ -->
+<div class="screen on" id="s-intro">
+  <div class="hero">
+    <div class="hero-orb a"></div>
+    <div class="hero-orb b"></div>
+    <div class="eyebrow">🌿 FamilIA · Encuesta 2</div>
+    <h1>¿Qué necesita<br/><em>realmente</em><br/>tu familiar?</h1>
+    <p class="hero-sub">Ya sabemos que te preocupa que esté acompañado/a. Ahora queremos entender qué funciones harían la diferencia.</p>
+    <div class="chips">
+      <div class="chip">⏱️ 4 minutos</div>
+      <div class="chip">📱 8 preguntas</div>
+      <div class="chip">🔒 Anónimo</div>
+    </div>
+  </div>
+  <div class="intro-body">
+    <div class="intro-cards">
+      <div class="intro-card">
+        <div class="ic-icon">🏆</div>
+        <div>
+          <div class="ic-title">Tú decides el producto</div>
+          <div class="ic-desc">Tus respuestas definen qué construimos primero. No es publicidad — es diseño participativo.</div>
+        </div>
+      </div>
+      <div class="intro-card">
+        <div class="ic-icon">💬</div>
+        <div>
+          <div class="ic-title">Basado en lo que ya nos dijiste</div>
+          <div class="ic-desc">La soledad fue la preocupación número 1. Esta encuesta profundiza en cómo resolverla.</div>
+        </div>
+      </div>
+      <div class="intro-card">
+        <div class="ic-icon">🎁</div>
+        <div>
+          <div class="ic-title">Acceso anticipado</div>
+          <div class="ic-desc">Quienes responden tendrán prioridad en la beta gratuita y descuento de lanzamiento.</div>
+        </div>
+      </div>
+    </div>
+    <div class="privacy">
+      <span>🔒</span><span>Respuestas anónimas · Solo para mejorar FamilIA</span>
+    </div>
+  </div>
+  <div class="nav-fixed" style="left:50%;transform:translateX(-50%);width:100%;max-width:480px">
+    <button class="btn-next" style="width:100%" onclick="go(0)">Empezar →</button>
+  </div>
+</div>
+
+<!-- ══ QUESTIONS (built by JS) ══════════════════════════════ -->
+<!-- ══ RESULTS ══════════════════════════════════════════════ -->
+<div class="screen" id="s-results">
+  <div class="results-hero">
+    <span class="result-emoji">🙏</span>
+    <h2>¡Gracias de corazón!</h2>
+    <p>Cada respuesta hace que FamilIA sea más útil para tu familia.</p>
+  </div>
+  <div class="results-body">
+    <div class="r-section">Tu resumen</div>
+    <div id="r-cards"></div>
+    <div style="height:18px"></div>
+    <div class="r-section">Comparte — ayuda a más familias</div>
+    <button class="share-btn" onclick="shareWA()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+      Compartir por WhatsApp
+    </button>
+    <button class="copy-btn" id="copyBtn" onclick="copyLink()">🔗 Copiar enlace</button>
+    <div class="r-section">¿Quieres ser de las primeras familias en probarla?</div>
+    <div class="email-row">
+      <input type="email" id="emailIn" placeholder="tu@email.com"/>
+      <button class="email-ok" onclick="saveEmail()">Apúntame</button>
+    </div>
+    <div class="email-confirm" id="emailOk">✓ ¡Anotado! Serás de las primeras.</div>
+    <span class="restart" onclick="restart()">Volver al inicio</span>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// QUESTIONS
+// ═══════════════════════════════════════════════════
+const Qs = [
+  {
+    id:'lonely',
+    type:'single',
+    text:'¿Sientes que tu familiar sufre de soledad o falta de compañía?',
+    sub:'El hallazgo más fuerte de nuestra primera encuesta',
+    insight:'El 86% de las familias que respondieron antes nombraron esto como su mayor preocupación.',
+    opts:[
+      {icon:'😔',label:'Sí, mucho — es lo que más me preocupa'},
+      {icon:'🤔',label:'Algo, pero no es lo principal'},
+      {icon:'😊',label:'No, tiene buena red de apoyo'},
+      {icon:'🏠',label:'Vive con familia, no aplica'},
+    ]
+  },
+  {
+    id:'features',
+    type:'multi',
+    text:'¿Cuáles funciones te parecen más útiles para tu familiar?',
+    sub:'Elige todas las que aplicarían — sin límite',
+    opts:[
+      {icon:'💊',label:'Recordatorio de medicamentos con voz'},
+      {icon:'📅',label:'Rutina diaria y check-in de bienestar'},
+      {icon:'🧠',label:'Juegos cognitivos adaptados (memoria, orientación)'},
+      {icon:'🛡️',label:'Detector de estafas y llamadas falsas'},
+      {icon:'🛒',label:'Compras guiadas en tiendas verificadas'},
+      {icon:'📍',label:'Geolocalización — saber dónde está'},
+      {icon:'📹',label:'Cámara o videollamada rápida con la familia'},
+      {icon:'👨‍👩‍👧',label:'Agenda de visitas y llamadas entre familiares'},
+      {icon:'🚨',label:'Botón de emergencia o detección de caídas'},
+      {icon:'💬',label:'Asistente IA con quien conversar durante el día'},
+    ]
+  },
+  {
+    id:'top3',
+    type:'rank',
+    text:'De estas 4, ¿cuál activaría tu decisión de pagar?',
+    sub:'Arrastra para ordenar de mayor a menor importancia',
+    items:[
+      {icon:'💊',label:'Rutinas y medicamentos'},
+      {icon:'🛡️',label:'Protección contra estafas'},
+      {icon:'📍',label:'Saber dónde está en todo momento'},
+      {icon:'💬',label:'Compañía y conversación con IA'},
+    ]
+  },
+  {
+    id:'alone_concern',
+    type:'single',
+    text:'Si tu familiar vive solo/a, ¿qué momento del día te genera más angustia?',
+    sub:'Si vive acompañado, elige la que más aplique igual',
+    opts:[
+      {icon:'🌅',label:'La mañana — no saber si despertó bien'},
+      {icon:'🌆',label:'La noche — sin nadie cerca si algo pasa'},
+      {icon:'🏥',label:'Cuando tiene citas o trámites afuera'},
+      {icon:'📱',label:'Cuando recibe mensajes o llamadas desconocidas'},
+      {icon:'🤷',label:'No me genera angustia particular'},
+    ]
+  },
+  {
+    id:'familycoord',
+    type:'single',
+    text:'¿Tu familia tiene alguna forma de coordinar quién llama o visita a tu familiar?',
+    sub:'Un insight nuevo que surgió en respuestas anteriores',
+    insight:'Alguien sugirió: "Una agenda para que los familiares se coordinen según el grado de relación." ¿Eso te haría sentido?',
+    opts:[
+      {icon:'✅',label:'Sí, nos coordinamos bien por WhatsApp'},
+      {icon:'😬',label:'Más o menos — a veces nadie llama por días'},
+      {icon:'❌',label:'No, cada uno hace lo que puede'},
+      {icon:'🏠',label:'Vivimos juntos, no es necesario'},
+    ]
+  },
+  {
+    id:'techbarrier',
+    type:'single',
+    text:'¿Cuál sería el mayor obstáculo para que tu familiar use una app así?',
+    sub:'Sé honesto/a — esto nos ayuda a diseñar mejor',
+    opts:[
+      {icon:'📱',label:'Le cuesta mucho usar el teléfono'},
+      {icon:'🙅',label:'No le gustaría que lo "monitoreen"'},
+      {icon:'💰',label:'El costo mensual'},
+      {icon:'🤷',label:'No veo obstáculo real'},
+      {icon:'👨‍👩‍👧',label:'Tendría que instalársela yo y enseñarle'},
+    ]
+  },
+  {
+    id:'price',
+    type:'price',
+    text:'¿Cuánto pagarías al mes por FamilIA Premium?',
+    sub:'Incluye: rutinas, antifraude activo, panel familiar y asistente IA sin límite',
+  },
+  {
+    id:'comment',
+    type:'text',
+    text:'¿Qué tendría que tener FamilIA para que la recomendaras sin dudar?',
+    sub:'Opcional — tu respuesta puede cambiar el producto',
+    placeholder:'Ej: "Que me avise si no sale de la cama antes de las 10am" o "Que reconozca las voces de estafadores"…',
+  },
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const ans = {};
+let cur = -1;
+const N = Qs.length;
+
+// ═══════════════════════════════════════════════════
+// BUILD SCREENS
+// ═══════════════════════════════════════════════════
+function buildAll(){
+  const wrap = document.querySelector('.wrap');
+  const res  = document.getElementById('s-results');
+  Qs.forEach((q,i)=>{
+    const d=document.createElement('div');
+    d.className='screen'; d.id=`s-${i}`;
+    d.innerHTML=buildQ(q,i);
+    wrap.insertBefore(d,res);
+  });
+}
+
+function buildQ(q,i){
+  let html='';
+  if(q.type==='single'||q.type==='multi'){
+    html=`<div class="options" id="opts-${i}">`+
+      q.opts.map((o,oi)=>
+        `<div class="opt ${q.type==='multi'?'multi':''}" onclick="pick(this,${i},${oi},${q.type==='multi'})" data-oi="${oi}">
+          <span class="opt-icon">${o.icon}</span>
+          <span class="opt-label">${o.label}</span>
+          <span class="opt-dot">${q.type==='multi'?'✓':'●'}</span>
+        </div>`
+      ).join('')+`</div>`;
+  }
+  if(q.type==='rank'){
+    html=`<div class="rank-list" id="rank-${i}">`+
+      q.items.map((it,ri)=>
+        `<div class="rank-item" draggable="true" data-ri="${ri}" data-qi="${i}">
+          <div class="rank-handle"><span></span><span></span><span></span></div>
+          <div class="rank-pos">${ri+1}</div>
+          <span class="rank-emoji">${it.icon}</span>
+          <span class="rank-label">${it.label}</span>
+        </div>`
+      ).join('')+`</div>
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:10px">Arrastra para reordenar</p>`;
+  }
+  if(q.type==='price'){
+    const prices=[
+      {amount:'$4.990',period:'/mes',desc:'Lo básico — rutinas + panel familiar',extra:''},
+      {amount:'$7.990',period:'/mes',desc:'Más antifraude activo + asistente IA',extra:''},
+      {amount:'$9.990',period:'/mes',desc:'Todo completo + geolocalización',extra:''},
+      {amount:'Gratis',period:'por ahora',desc:'Solo si hay versión gratuita útil',extra:'green'},
+    ];
+    html=`<div class="price-grid" id="price-${i}">`+
+      prices.map((p,pi)=>
+        `<div class="price-card ${p.extra}" onclick="pickPrice(this,${i},${pi})" data-pi="${pi}">
+          <div class="price-amount" ${p.amount==='Gratis'?'style="color:var(--sage)"':''}>${p.amount}</div>
+          <div class="price-period">${p.period}</div>
+          <div class="price-desc">${p.desc}</div>
+          <div class="price-check">${p.amount==='Gratis'?'✓':'●'}</div>
+        </div>`
+      ).join('')+`</div>`;
+  }
+  if(q.type==='text'){
+    html=`<div class="textarea-wrap">
+      <textarea id="ta-${i}" placeholder="${q.placeholder||''}" rows="4" oninput="ans['${q.id}']=this.value.trim();updateBtn(${i})"></textarea>
+    </div>`;
+  }
+
+  const insightHtml=q.insight?`<div class="insight-box"><span style="font-size:18px">💡</span><p>${q.insight}</p></div>`:'';
+
+  return `
+    <div class="dots" id="dots-${i}"></div>
+    <div class="content">
+      <div class="q-meta">
+        <div class="q-num">${i+1}</div>
+        <div class="q-step">Pregunta ${i+1} de ${N}</div>
+      </div>
+      <div class="q-text">${q.text}</div>
+      ${q.sub?`<div class="q-sub">${q.sub}</div>`:'<div style="height:14px"></div>'}
+      ${insightHtml}
+      ${html}
+    </div>
+    <div class="nav-fixed" style="left:50%;transform:translateX(-50%);width:100%;max-width:480px">
+      ${i>0?`<button class="btn-back" onclick="goBack(${i})">←</button>`:''}
+      <button class="btn-next" id="btn-${i}" onclick="goNext(${i})" ${(q.type!=='text'&&q.type!=='rank')?'disabled':''}>
+        ${i===N-1?'Ver mis respuestas ✓':'Siguiente →'}
+      </button>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// INTERACTIONS
+// ═══════════════════════════════════════════════════
+function pick(el,qi,oi,isMulti){
+  const q=Qs[qi];
+  const opts=document.querySelectorAll(`#opts-${qi} .opt`);
+  if(isMulti){
+    el.classList.toggle('sel');
+    const sel=[...opts].filter(o=>o.classList.contains('sel')).map(o=>q.opts[+o.dataset.oi].label);
+    ans[q.id]=sel.length?sel:null;
+  } else {
+    opts.forEach(o=>o.classList.remove('sel'));
+    el.classList.add('sel');
+    ans[q.id]=q.opts[oi].label;
+  }
+  updateBtn(qi);
+}
+
+function pickPrice(el,qi,pi){
+  const cards=document.querySelectorAll(`#price-${qi} .price-card`);
+  cards.forEach(c=>{c.classList.remove('sel');if(!c.classList.contains('green')){c.querySelector('.price-check').textContent='●'}else{c.querySelector('.price-check').textContent='✓'}});
+  el.classList.add('sel');
+  const prices=['$4.990/mes','$7.990/mes','$9.990/mes','Gratis'];
+  ans[Qs[qi].id]=prices[pi];
+  updateBtn(qi);
+}
+
+function updateBtn(qi){
+  const btn=document.getElementById(`btn-${qi}`);
+  const q=Qs[qi];
+  let has=false;
+  if(q.type==='text'||q.type==='rank') has=true;
+  else{ const a=ans[q.id]; has=Array.isArray(a)?a.length>0:!!a; }
+  btn.disabled=!has;
+}
+
+// ── DRAG RANK ──
+let dragSrc=null;
+document.addEventListener('dragstart',e=>{
+  const it=e.target.closest('.rank-item');
+  if(it){dragSrc=it;it.classList.add('dragging');}
+});
+document.addEventListener('dragend',e=>{
+  const it=e.target.closest('.rank-item');
+  if(it) it.classList.remove('dragging');
+  document.querySelectorAll('.rank-item').forEach(r=>r.classList.remove('drag-over'));
+});
+document.addEventListener('dragover',e=>{
+  e.preventDefault();
+  const it=e.target.closest('.rank-item');
+  document.querySelectorAll('.rank-item').forEach(r=>r.classList.remove('drag-over'));
+  if(it&&it!==dragSrc) it.classList.add('drag-over');
+});
+document.addEventListener('drop',e=>{
+  e.preventDefault();
+  const target=e.target.closest('.rank-item');
+  if(!target||!dragSrc||target===dragSrc) return;
+  const list=target.parentNode;
+  const items=[...list.querySelectorAll('.rank-item')];
+  const si=items.indexOf(dragSrc),ti=items.indexOf(target);
+  if(si<ti) list.insertBefore(dragSrc,target.nextSibling);
+  else list.insertBefore(dragSrc,target);
+  // update positions
+  [...list.querySelectorAll('.rank-item')].forEach((r,idx)=>r.querySelector('.rank-pos').textContent=idx+1);
+  // save answer
+  const qi=parseInt(dragSrc.dataset.qi);
+  const q=Qs[qi];
+  ans[q.id]=[...list.querySelectorAll('.rank-item')].map(r=>q.items[+r.dataset.ri].label);
+  document.querySelectorAll('.rank-item').forEach(r=>r.classList.remove('drag-over'));
+  dragSrc=null;
+});
+
+// Touch drag for rank (mobile)
+let touchItem=null, touchStartY=0, touchClone=null;
+document.addEventListener('touchstart',e=>{
+  const it=e.target.closest('.rank-item');
+  if(!it) return;
+  touchItem=it;
+  touchStartY=e.touches[0].clientY;
+  touchClone=it.cloneNode(true);
+  touchClone.style.cssText=`position:fixed;left:${it.getBoundingClientRect().left}px;top:${it.getBoundingClientRect().top}px;width:${it.offsetWidth}px;opacity:.8;z-index:999;pointer-events:none;border:2px solid var(--terra);border-radius:var(--r)`;
+  document.body.appendChild(touchClone);
+  it.style.opacity='.3';
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!touchItem||!touchClone) return;
+  const t=e.touches[0];
+  touchClone.style.top=(t.clientY-30)+'px';
+  const el2=document.elementFromPoint(t.clientX,t.clientY);
+  const target=el2&&el2.closest('.rank-item');
+  document.querySelectorAll('.rank-item').forEach(r=>r.classList.remove('drag-over'));
+  if(target&&target!==touchItem) target.classList.add('drag-over');
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!touchItem) return;
+  if(touchClone){document.body.removeChild(touchClone);touchClone=null;}
+  touchItem.style.opacity='';
+  const t=e.changedTouches[0];
+  const el2=document.elementFromPoint(t.clientX,t.clientY);
+  const target=el2&&el2.closest('.rank-item');
+  if(target&&target!==touchItem){
+    const list=target.parentNode;
+    const items=[...list.querySelectorAll('.rank-item')];
+    const si=items.indexOf(touchItem),ti=items.indexOf(target);
+    if(si<ti) list.insertBefore(touchItem,target.nextSibling);
+    else list.insertBefore(touchItem,target);
+    [...list.querySelectorAll('.rank-item')].forEach((r,idx)=>r.querySelector('.rank-pos').textContent=idx+1);
+    const qi=parseInt(touchItem.dataset.qi);
+    const q=Qs[qi];
+    ans[q.id]=[...list.querySelectorAll('.rank-item')].map(r=>q.items[+r.dataset.ri].label);
+  }
+  document.querySelectorAll('.rank-item').forEach(r=>r.classList.remove('drag-over'));
+  touchItem=null;
+});
+
+// ═══════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════
+function show(id,back=false){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  const s=document.getElementById(id);
+  s.classList.add('on');
+  window.scrollTo(0,0);
+}
+function updateProg(i){
+  const pct=i<0?0:Math.round((i+1)/N*100);
+  document.getElementById('prog').style.width=pct+'%';
+}
+function updateDots(i){
+  const c=document.getElementById(`dots-${i}`);
+  if(!c) return;
+  c.innerHTML=Qs.map((_,j)=>`<div class="dot ${j===i?'on':j<i?'done':''}"></div>`).join('');
+}
+function go(i){cur=i;updateProg(i);updateDots(i);show(`s-${i}`);}
+function goBack(i){i>0?go(i-1):(cur=-1,updateProg(-1),show('s-intro'));}
+function goNext(i){i<N-1?go(i+1):showResults();}
+
+function showResults(){
+  updateProg(N);
+  buildResults();
+  show('s-results');
+}
+
+function buildResults(){
+  const c=document.getElementById('r-cards');
+  const map={
+    lonely:'¿Soledad?',features:'Funciones elegidas',top3:'Prioridad de decisión de pago',
+    alone_concern:'Momento de mayor angustia',familycoord:'Coordinación familiar',
+    techbarrier:'Principal obstáculo',price:'Precio aceptable',comment:'Tu comentario'
+  };
+  c.innerHTML=Qs.map(q=>{
+    let a=ans[q.id];
+    if(!a) return '';
+    if(Array.isArray(a)) a=a.join(' · ');
+    const hi=q.id==='price'||q.id==='top3';
+    return `<div class="r-card"><div class="r-q">${map[q.id]||q.id}</div><div class="r-a ${hi?'hi':''}">${a}</div></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// SHARE
+// ═══════════════════════════════════════════════════
+function shareWA(){
+  const msg=encodeURIComponent('Hola 👋 Respondí una encuesta sobre FamilIA — una app para acompañar a nuestros mayores. ¡Toma solo 4 minutos y ayuda a definir qué construyen primero!\n\n'+window.location.href);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+function copyLink(){
+  const btn=document.getElementById('copyBtn');
+  const text=window.location.href;
+  navigator.clipboard.writeText(text).catch(()=>{const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);});
+  btn.classList.add('copied');btn.innerHTML='✓ ¡Copiado!';
+  setTimeout(()=>{btn.classList.remove('copied');btn.innerHTML='🔗 Copiar enlace';},2500);
+}
+function saveEmail(){
+  const v=document.getElementById('emailIn').value.trim();
+  if(!v||!v.includes('@')) return;
+  document.getElementById('emailOk').style.display='block';
+  document.getElementById('emailIn').value='';
+  console.log('email:',v);
+}
+function restart(){
+  Object.keys(ans).forEach(k=>delete ans[k]);
+  cur=-1;
+  document.getElementById('prog').style.width='0%';
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('sel'));
+  document.querySelectorAll('.price-card').forEach(c=>c.classList.remove('sel'));
+  document.querySelectorAll('textarea').forEach(t=>t.value='');
+  Qs.forEach((_,i)=>{const b=document.getElementById(`btn-${i}`);if(b&&Qs[i].type!=='text'&&Qs[i].type!=='rank') b.disabled=true;});
+  show('s-intro');
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+buildAll();
+</script>
+</body>
+</html>
